@@ -122,7 +122,7 @@ function EditMenuScreen({ navigation, route }) {
     </SafeAreaView>
   );
 }
-
+// View All Screen
 function ViewAllScreen({ navigation }) {
   const { items, deleteItem } = useMenu();
   const handleDelete = (id) => {
