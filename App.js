@@ -157,7 +157,7 @@ function ViewAllScreen({ navigation }) {
     </SafeAreaView>
   );
 }
-
+// Search & Filter Screen
 function SearchFilterScreen({ navigation }) {
   const { items, deleteItem } = useMenu();
   const [query, setQuery] = useState("");
