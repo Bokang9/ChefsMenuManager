@@ -49,7 +49,7 @@ function MenuProvider({ children }) {
 function useMenu() {
   return useContext(MenuContext);
 }
-
+// Home / Menu Screen
 function HomeScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.screen}>
