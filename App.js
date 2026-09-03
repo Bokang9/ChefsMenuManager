@@ -68,7 +68,7 @@ function HomeScreen({ navigation }) {
     </SafeAreaView>
   );
 }
-
+// Add Menu Screen
 function AddMenuScreen({ navigation }) {
   const { addItem } = useMenu();
   const [dishName, setDishName] = useState(""); const [description, setDescription] = useState(""); const [course, setCourse] = useState(""); const [price, setPrice] = useState(""); const [errors, setErrors] = useState({});
