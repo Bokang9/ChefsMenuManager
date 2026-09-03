@@ -203,7 +203,7 @@ function SearchFilterScreen({ navigation }) {
     </SafeAreaView>
   );
 }
-
+// Statistics Screen
 function StatisticsScreen() {
   const { items } = useMenu();
   const total = items.length;
