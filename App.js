@@ -96,7 +96,7 @@ function AddMenuScreen({ navigation }) {
     </SafeAreaView>
   );
 }
-
+// Edit Menu Screen
 function EditMenuScreen({ navigation, route }) {
   const { item } = route.params;
   const { updateItem, deleteItem } = useMenu();
