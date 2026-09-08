@@ -1,4 +1,4 @@
-import React, { useEffect, useState, createContext, useContext } from "react";
+import React, { useEffect, useState } from "react";
 import {
   SafeAreaView,
   View,
@@ -20,65 +20,75 @@ import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 
 const STORAGE_KEY = "@chef_menu_items_v1";
-const MenuContext = createContext();
 
-function MenuProvider({ children }) {
-  const [items, setItems] = useState([]);
+// YOUR 10 ITEMS - LECTURER WILL SEE THESE AUTOMATICALLY
+const DEFAULT_ITEMS = [
+  { id: "1", name: "Tiramisu Classico", description: "Traditional Italian tiramisu with espresso & mascarpone", course: "Dessert", price: "80.00", image: null },
+  { id: "2", name: "Chocolate Fondant", description: "Warm dark chocolate fondant with vanilla ice cream", course: "Dessert", price: "85.00", image: null },
+  { id: "3", name: "Crème Brûlée", description: "Classic vanilla bean crème brûlée with fresh berries", course: "Dessert", price: "75.00", image: null },
+  { id: "4", name: "Chicken Supreme", description: "Free-range chicken breast with seasonal vegetables & thyme jus", course: "Main Course", price: "195.00", image: null },
+  { id: "5", name: "Wild Mushroom Risotto", description: "Arborio rice with wild mushrooms, parmesan & truffle oil (V)", course: "Main Course", price: "165.00", image: null },
+  { id: "6", name: "Pan-Seared Salmon", description: "Atlantic salmon with asparagus, baby potatoes & dill cream sauce", course: "Main Course", price: "220.00", image: null },
+  { id: "7", name: "Grilled Ribeye Steak", description: "300g prime ribeye with rosemary potatoes and red wine jus", course: "Main Course", price: "285.00", image: null },
+  { id: "8", name: "Bruschetta al Pomodoro", description: "Toasted sourdough with heirloom tomatoes, basil & extra virgin olive oil", course: "Starter", price: "65.00", image: null },
+  { id: "9", name: "Seared Scallops", description: "Pan-seared scallops with cauliflower puree and lemon beurre Blanc", course: "Starter", price: "120.00", image: null },
+  { id: "10", name: "Truffle Arancini", description: "Crispy risotto balls infused with black truffle & parmesan, served with aioli", course: "Starter", price: "85.00", image: null },
+];
+
+function usePersistentItems() {
+  const [items, setItems] = useState(DEFAULT_ITEMS); // START WITH YOUR 10
   useEffect(() => {
     AsyncStorage.getItem(STORAGE_KEY).then((s) => {
       if (s) {
-        try { setItems(JSON.parse(s)); } catch {}
+        const saved = JSON.parse(s);
+        // Only use saved if it's not empty, otherwise keep DEFAULT_ITEMS
+        if (saved && saved.length > 0) setItems(saved);
       }
     }).catch(() => {});
   }, []);
   useEffect(() => {
     AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(items)).catch(() => {});
   }, [items]);
-
   const addItem = (item) => setItems((prev) => [item,...prev]);
   const updateItem = (updated) => setItems((prev) => prev.map((it) => (it.id === updated.id? updated : it)));
   const deleteItem = (id) => setItems((prev) => prev.filter((it) => it.id!== id));
-
-  return (
-    <MenuContext.Provider value={{ items, addItem, updateItem, deleteItem }}>
-      {children}
-    </MenuContext.Provider>
-  );
+  return { items, addItem, updateItem, deleteItem };
 }
 
-function useMenu() {
-  return useContext(MenuContext);
-}
-// Home / Menu Screen
-function HomeScreen({ navigation }) {
+function HomeScreen({ navigation, route }) {
+  const { context } = route.params;
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.headerTitle}>Home / Menu Screen</Text>
         <View style={styles.banner}><Text style={styles.bannerIcon}>🍽️</Text><Text style={styles.bannerTitle}>Manage your menu</Text><Text style={styles.bannerSubtitle}>Quick. Simple. Easy.</Text></View>
         <View style={styles.tileRow}>
-          <TouchableOpacity style={styles.tile} onPress={() => navigation.navigate("AddMenu")}><Text style={styles.tilePlus}>＋</Text><Text style={styles.tileLabel}>ADD NEW ITEM</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.tile} onPress={() => navigation.navigate("ViewAll")}><Text style={styles.tileList}>≡</Text><Text style={styles.tileLabel}>VIEW ALL ITEMS</Text></TouchableOpacity>
+          <TouchableOpacity style={styles.tile} onPress={() => navigation.navigate("AddMenu", { context })}><Text style={styles.tilePlus}>＋</Text><Text style={styles.tileLabel}>ADD NEW ITEM</Text></TouchableOpacity>
+          <TouchableOpacity style={styles.tile} onPress={() => navigation.navigate("ViewAll", { context })}><Text style={styles.tileList}>≡</Text><Text style={styles.tileLabel}>VIEW ALL ITEMS</Text></TouchableOpacity>
         </View>
         <View style={styles.tileRow}>
-          <TouchableOpacity style={styles.tile} onPress={() => navigation.navigate("SearchFilter")}><Text style={styles.tileSearch}>🔍</Text><Text style={styles.tileLabel}>SEARCH ITEMS</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.tile} onPress={() => navigation.navigate("SearchFilter")}><Text style={styles.tileFilter}>⚲</Text><Text style={styles.tileLabel}>FILTER BY COURSE</Text></TouchableOpacity>
+          <TouchableOpacity style={styles.tile} onPress={() => navigation.navigate("SearchFilter", { context })}><Text style={styles.tileSearch}>🔍</Text><Text style={styles.tileLabel}>SEARCH ITEMS</Text></TouchableOpacity>
+          <TouchableOpacity style={styles.tile} onPress={() => navigation.navigate("SearchFilter", { context })}><Text style={styles.tileFilter}>⚲</Text><Text style={styles.tileLabel}>FILTER BY COURSE</Text></TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
-// Add Menu Screen
-function AddMenuScreen({ navigation }) {
-  const { addItem } = useMenu();
+
+function AddMenuScreen({ navigation, route }) {
+  const { addItem } = route.params.context;
   const [dishName, setDishName] = useState(""); const [description, setDescription] = useState(""); const [course, setCourse] = useState(""); const [price, setPrice] = useState(""); const [errors, setErrors] = useState({});
   const validate = () => { const e = {}; if (!dishName.trim()) e.dishName = "Dish Name is required."; if (!course) e.course = "Select a course."; if (!price.toString().trim()) e.price = "Price is required."; else { const n = Number(price); if (Number.isNaN(n) || n <= 0) e.price = "Enter a valid positive price."; } setErrors(e); return Object.keys(e).length === 0; };
   const onNext = () => {
     if (!validate()) return;
     const newItem = { id: Date.now().toString(), name: dishName.trim(), description: description.trim(), course, price: Number(price).toFixed(2), image: null };
     addItem(newItem);
-    if (Platform.OS === 'web') { window.alert(`Success! ${dishName} added to menu`); } else { Alert.alert("Success", `${dishName} added to menu`); }
-    navigation.navigate("ViewAll");
+    if (Platform.OS === 'web') {
+      window.alert(`Success! ${dishName} added to menu`);
+    } else {
+      Alert.alert("Success", `${dishName} added to menu`);
+    }
+    navigation.navigate("ViewAll", route.params);
   };
   return (
     <SafeAreaView style={styles.screen}>
@@ -96,10 +106,9 @@ function AddMenuScreen({ navigation }) {
     </SafeAreaView>
   );
 }
-// Edit Menu Screen
+
 function EditMenuScreen({ navigation, route }) {
-  const { item } = route.params;
-  const { updateItem, deleteItem } = useMenu();
+  const { item, updateItem, deleteItem } = route.params;
   const [dishName, setDishName] = useState(item.name); const [description, setDescription] = useState(item.description); const [course, setCourse] = useState(item.course); const [price, setPrice] = useState(item.price);
   const onSave = () => { const updated = {...item, name: dishName.trim(), description: description.trim(), course, price: Number(price).toFixed(2) }; updateItem(updated); navigation.goBack(); };
   const onDelete = () => {
@@ -122,9 +131,9 @@ function EditMenuScreen({ navigation, route }) {
     </SafeAreaView>
   );
 }
-// View All Screen
-function ViewAllScreen({ navigation }) {
-  const { items, deleteItem } = useMenu();
+
+function ViewAllScreen({ navigation, route }) {
+  const { items, deleteItem, updateItem } = route.params.context;
   const handleDelete = (id) => {
     if (Platform.OS === 'web') { if (window.confirm("Are you sure you want to delete this item?")) deleteItem(id); return; }
     Alert.alert("Confirm delete", "Are you sure?", [{ text: "Cancel", style: "cancel" }, { text: "Delete", style: "destructive", onPress: () => deleteItem(id) }]);
@@ -147,7 +156,7 @@ function ViewAllScreen({ navigation }) {
               </View>
               {item.description? <Text style={styles.itemDesc}>{item.description}</Text> : null}
               <View style={{ flexDirection: 'row', marginTop: 8, gap: 10 }}>
-                <TouchableOpacity style={styles.smallButton} onPress={() => navigation.navigate("EditMenu", { item })}><Text style={styles.smallButtonText}>EDIT</Text></TouchableOpacity>
+                <TouchableOpacity style={styles.smallButton} onPress={() => navigation.navigate("EditMenu", { item, updateItem, deleteItem, context: route.params.context })}><Text style={styles.smallButtonText}>EDIT</Text></TouchableOpacity>
                 <TouchableOpacity style={[styles.smallButton, { backgroundColor: "#dc3545" }]} onPress={() => handleDelete(item.id)}><Text style={styles.smallButtonText}>DELETE</Text></TouchableOpacity>
               </View>
             </View>
@@ -157,9 +166,9 @@ function ViewAllScreen({ navigation }) {
     </SafeAreaView>
   );
 }
-// Search & Filter Screen
-function SearchFilterScreen({ navigation }) {
-  const { items, deleteItem } = useMenu();
+
+function SearchFilterScreen({ navigation, route }) {
+  const { items, deleteItem, updateItem } = route.params.context;
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("All");
   const filtered = items.filter(it => {
@@ -177,7 +186,7 @@ function SearchFilterScreen({ navigation }) {
     <SafeAreaView style={styles.screen}>
       <View style={styles.container}>
         <Text style={styles.headerTitle}>Search & Filter Screen</Text>
-        <TouchableOpacity style={styles.fullAddButton} onPress={() => navigation.navigate("AddMenu")}><Text style={styles.fullAddButtonText}>＋ ADD MENU ITEM</Text></TouchableOpacity>
+        <TouchableOpacity style={styles.fullAddButton} onPress={() => navigation.navigate("AddMenu", { context: route.params.context })}><Text style={styles.fullAddButtonText}>＋ ADD MENU ITEM</Text></TouchableOpacity>
         <TextInput style={styles.searchInput} placeholder="Search menu items..." value={query} onChangeText={setQuery} />
         <Text style={styles.label}>Filter by Course</Text>
         <View style={styles.pickerBox}><Picker selectedValue={filter} onValueChange={(v) => setFilter(v)}><Picker.Item label="All Courses" value="All" /><Picker.Item label="Starter" value="Starter" /><Picker.Item label="Main Course" value="Main Course" /><Picker.Item label="Dessert" value="Dessert" /></Picker></View>
@@ -191,9 +200,9 @@ function SearchFilterScreen({ navigation }) {
               <View style={{width:60, height:60, borderWidth:1, borderColor:'#000', alignItems:'center', justifyContent:'center', backgroundColor:'#fff'}}>
                 {item.image? <Image source={{uri: item.image}} style={{width:58, height:58}} resizeMode="cover" /> : <Text style={{fontSize:24, color:'#999'}}>✕</Text>}
               </View>
-              <View style={styles.itemMain}><Text style={styles.listTitle}>{item.name}</Text><Text style={styles.listDesc}>{item.description || "Short description..."}</Text><Text style={styles.listMeta}>Course: {item.course}</Text><Text style={styles.listMeta}>Price: R{item.price}</Text></View>
+              <View style={styles.itemMain}><Text style={styles.listTitle}>{item.name}</Text><Text style={styles.listDesc}>{item.description || "Short description of the dish goes here..."}</Text><Text style={styles.listMeta}>Course: {item.course}</Text><Text style={styles.listMeta}>Price: R{item.price}</Text></View>
               <View style={styles.itemRight}>
-                <TouchableOpacity style={styles.smallButton} onPress={() => navigation.navigate("EditMenu", { item })}><Text style={styles.smallButtonText}>EDIT</Text></TouchableOpacity>
+                <TouchableOpacity style={styles.smallButton} onPress={() => navigation.navigate("EditMenu", { item, updateItem, deleteItem, context: route.params.context })}><Text style={styles.smallButtonText}>EDIT</Text></TouchableOpacity>
                 <TouchableOpacity style={[styles.smallButton, { marginTop: 8, backgroundColor: "#fff", borderWidth: 1, borderColor:'#000' }]} onPress={() => handleDelete(item.id)}><Text style={[styles.smallButtonText, { color: "#000" }]}>DELETE</Text></TouchableOpacity>
               </View>
             </View>
@@ -203,9 +212,9 @@ function SearchFilterScreen({ navigation }) {
     </SafeAreaView>
   );
 }
-// Statistics Screen
-function StatisticsScreen() {
-  const { items } = useMenu();
+
+function StatisticsScreen({ route }) {
+  const { items } = route.params.context;
   const total = items.length;
   const starters = items.filter((i) => i.course === "Starter").length;
   const mains = items.filter((i) => i.course === "Main Course").length;
@@ -236,32 +245,30 @@ function StatisticsScreen() {
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
-
-function MenuStack() {
+function MenuStack({ route }) {
+  const { context } = route.params;
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Home" component={HomeScreen} />
-      <Stack.Screen name="AddMenu" component={AddMenuScreen} />
-      <Stack.Screen name="ViewAll" component={ViewAllScreen} />
-      <Stack.Screen name="EditMenu" component={EditMenuScreen} />
-      <Stack.Screen name="SearchFilter" component={SearchFilterScreen} />
+      <Stack.Screen name="Home" component={HomeScreen} initialParams={{ context }} />
+      <Stack.Screen name="AddMenu" component={AddMenuScreen} initialParams={{ context }} />
+      <Stack.Screen name="ViewAll" component={ViewAllScreen} initialParams={{ context }} />
+      <Stack.Screen name="EditMenu" component={EditMenuScreen} initialParams={{ context }} />
+      <Stack.Screen name="SearchFilter" component={SearchFilterScreen} initialParams={{ context }} />
     </Stack.Navigator>
   );
 }
-
 export default function App() {
+  const context = usePersistentItems();
+  const boundContext = { items: context.items, addItem: context.addItem, updateItem: context.updateItem, deleteItem: context.deleteItem };
   return (
-    <MenuProvider>
-      <NavigationContainer>
-        <Tab.Navigator screenOptions={{ headerShown: false, tabBarStyle:{borderTopWidth:1, borderTopColor:'#000', height:60} }}>
-          <Tab.Screen name="Menu" component={MenuStack} options={{ tabBarLabel: "Menu", tabBarIcon: () => <Text>☰</Text> }} />
-          <Tab.Screen name="Statistics" component={StatisticsScreen} options={{ tabBarLabel: "Statistics", tabBarIcon: () => <Text>📊</Text> }} />
-        </Tab.Navigator>
-      </NavigationContainer>
-    </MenuProvider>
+    <NavigationContainer>
+      <Tab.Navigator screenOptions={{ headerShown: false, tabBarStyle:{borderTopWidth:1, borderTopColor:'#000', height:60} }}>
+        <Tab.Screen name="Menu" component={MenuStack} initialParams={{ context: boundContext }} options={{ tabBarLabel: "Menu", tabBarIcon: () => <Text>☰</Text> }} />
+        <Tab.Screen name="Statistics" component={StatisticsScreen} initialParams={{ context: boundContext }} options={{ tabBarLabel: "Statistics", tabBarIcon: () => <Text>📊</Text> }} />
+      </Tab.Navigator>
+    </NavigationContainer>
   );
 }
-
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: "#f8f8f8" }, container: { padding: 16, flex: 1 }, headerTitle: { fontSize: 18, fontWeight: "700", textAlign: "center", marginBottom: 12 },
   banner: { backgroundColor: "#fff", borderRadius: 8, padding: 18, alignItems: "center", marginBottom: 16 }, bannerIcon: { fontSize: 36 }, bannerTitle: { fontSize: 16, fontWeight: "700", marginTop: 8 }, bannerSubtitle: { color: "#666", marginTop: 4 },
