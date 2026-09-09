@@ -31,6 +31,14 @@ npm install
 npx expo start -c
 Press w for web or scan QR with Expo Go
 
+## POE Video Demonstration
+
+YouTube Link (Unlisted): https://youtu.be/VhvNOVp7ae4
+
+This video demonstrates the Chef Menu App running with:
+npx expo start -c on http://localhost:8081
+Includes: Add item fix, view all 10 menu items, search/filter.
+
 ## 5. Conclusion
 In conclusion, the Chef's Menu Manager app successfully meets all POE requirements. It provides complete CRUD functionality with value-added features. The DEFAULT_ITEMS solution ensures data is visible on first launch for marking. The app demonstrates core mobile skills: React Native, hooks, navigation, AsyncStorage, validation. All 8 GitHub Actions workflows are passing green. Through this POE I learned to build practical user-friendly apps solving real hospitality problems.
 
