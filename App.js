@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, createContext, useContext } from "react";
 import {
   SafeAreaView,
   View,
@@ -21,7 +21,6 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 
 const STORAGE_KEY = "@chef_menu_items_v1";
 
-// YOUR 10 ITEMS - LECTURER WILL SEE THESE AUTOMATICALLY
 const DEFAULT_ITEMS = [
   { id: "1", name: "Tiramisu Classico", description: "Traditional Italian tiramisu with espresso & mascarpone", course: "Dessert", price: "80.00", image: null },
   { id: "2", name: "Chocolate Fondant", description: "Warm dark chocolate fondant with vanilla ice cream", course: "Dessert", price: "85.00", image: null },
@@ -35,13 +34,15 @@ const DEFAULT_ITEMS = [
   { id: "10", name: "Truffle Arancini", description: "Crispy risotto balls infused with black truffle & parmesan, served with aioli", course: "Starter", price: "85.00", image: null },
 ];
 
+// CREATE CONTEXT - FIXES YOUR BUG
+const MenuContext = createContext(null);
+
 function usePersistentItems() {
-  const [items, setItems] = useState(DEFAULT_ITEMS); // START WITH YOUR 10
+  const [items, setItems] = useState(DEFAULT_ITEMS);
   useEffect(() => {
     AsyncStorage.getItem(STORAGE_KEY).then((s) => {
       if (s) {
         const saved = JSON.parse(s);
-        // Only use saved if it's not empty, otherwise keep DEFAULT_ITEMS
         if (saved && saved.length > 0) setItems(saved);
       }
     }).catch(() => {});
@@ -55,28 +56,27 @@ function usePersistentItems() {
   return { items, addItem, updateItem, deleteItem };
 }
 
-function HomeScreen({ navigation, route }) {
-  const { context } = route.params;
+function HomeScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.headerTitle}>Home / Menu Screen</Text>
         <View style={styles.banner}><Text style={styles.bannerIcon}>🍽️</Text><Text style={styles.bannerTitle}>Manage your menu</Text><Text style={styles.bannerSubtitle}>Quick. Simple. Easy.</Text></View>
         <View style={styles.tileRow}>
-          <TouchableOpacity style={styles.tile} onPress={() => navigation.navigate("AddMenu", { context })}><Text style={styles.tilePlus}>＋</Text><Text style={styles.tileLabel}>ADD NEW ITEM</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.tile} onPress={() => navigation.navigate("ViewAll", { context })}><Text style={styles.tileList}>≡</Text><Text style={styles.tileLabel}>VIEW ALL ITEMS</Text></TouchableOpacity>
+          <TouchableOpacity style={styles.tile} onPress={() => navigation.navigate("AddMenu")}><Text style={styles.tilePlus}>＋</Text><Text style={styles.tileLabel}>ADD NEW ITEM</Text></TouchableOpacity>
+          <TouchableOpacity style={styles.tile} onPress={() => navigation.navigate("ViewAll")}><Text style={styles.tileList}>≡</Text><Text style={styles.tileLabel}>VIEW ALL ITEMS</Text></TouchableOpacity>
         </View>
         <View style={styles.tileRow}>
-          <TouchableOpacity style={styles.tile} onPress={() => navigation.navigate("SearchFilter", { context })}><Text style={styles.tileSearch}>🔍</Text><Text style={styles.tileLabel}>SEARCH ITEMS</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.tile} onPress={() => navigation.navigate("SearchFilter", { context })}><Text style={styles.tileFilter}>⚲</Text><Text style={styles.tileLabel}>FILTER BY COURSE</Text></TouchableOpacity>
+          <TouchableOpacity style={styles.tile} onPress={() => navigation.navigate("SearchFilter")}><Text style={styles.tileSearch}>🔍</Text><Text style={styles.tileLabel}>SEARCH ITEMS</Text></TouchableOpacity>
+          <TouchableOpacity style={styles.tile} onPress={() => navigation.navigate("SearchFilter")}><Text style={styles.tileFilter}>⚲</Text><Text style={styles.tileLabel}>FILTER BY COURSE</Text></TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-function AddMenuScreen({ navigation, route }) {
-  const { addItem } = route.params.context;
+function AddMenuScreen({ navigation }) {
+  const { addItem } = useContext(MenuContext);
   const [dishName, setDishName] = useState(""); const [description, setDescription] = useState(""); const [course, setCourse] = useState(""); const [price, setPrice] = useState(""); const [errors, setErrors] = useState({});
   const validate = () => { const e = {}; if (!dishName.trim()) e.dishName = "Dish Name is required."; if (!course) e.course = "Select a course."; if (!price.toString().trim()) e.price = "Price is required."; else { const n = Number(price); if (Number.isNaN(n) || n <= 0) e.price = "Enter a valid positive price."; } setErrors(e); return Object.keys(e).length === 0; };
   const onNext = () => {
@@ -88,7 +88,7 @@ function AddMenuScreen({ navigation, route }) {
     } else {
       Alert.alert("Success", `${dishName} added to menu`);
     }
-    navigation.navigate("ViewAll", route.params);
+    navigation.navigate("ViewAll");
   };
   return (
     <SafeAreaView style={styles.screen}>
@@ -108,7 +108,8 @@ function AddMenuScreen({ navigation, route }) {
 }
 
 function EditMenuScreen({ navigation, route }) {
-  const { item, updateItem, deleteItem } = route.params;
+  const { item } = route.params;
+  const { updateItem, deleteItem } = useContext(MenuContext);
   const [dishName, setDishName] = useState(item.name); const [description, setDescription] = useState(item.description); const [course, setCourse] = useState(item.course); const [price, setPrice] = useState(item.price);
   const onSave = () => { const updated = {...item, name: dishName.trim(), description: description.trim(), course, price: Number(price).toFixed(2) }; updateItem(updated); navigation.goBack(); };
   const onDelete = () => {
@@ -132,8 +133,8 @@ function EditMenuScreen({ navigation, route }) {
   );
 }
 
-function ViewAllScreen({ navigation, route }) {
-  const { items, deleteItem, updateItem } = route.params.context;
+function ViewAllScreen({ navigation }) {
+  const { items, deleteItem } = useContext(MenuContext);
   const handleDelete = (id) => {
     if (Platform.OS === 'web') { if (window.confirm("Are you sure you want to delete this item?")) deleteItem(id); return; }
     Alert.alert("Confirm delete", "Are you sure?", [{ text: "Cancel", style: "cancel" }, { text: "Delete", style: "destructive", onPress: () => deleteItem(id) }]);
@@ -156,7 +157,7 @@ function ViewAllScreen({ navigation, route }) {
               </View>
               {item.description? <Text style={styles.itemDesc}>{item.description}</Text> : null}
               <View style={{ flexDirection: 'row', marginTop: 8, gap: 10 }}>
-                <TouchableOpacity style={styles.smallButton} onPress={() => navigation.navigate("EditMenu", { item, updateItem, deleteItem, context: route.params.context })}><Text style={styles.smallButtonText}>EDIT</Text></TouchableOpacity>
+                <TouchableOpacity style={styles.smallButton} onPress={() => navigation.navigate("EditMenu", { item })}><Text style={styles.smallButtonText}>EDIT</Text></TouchableOpacity>
                 <TouchableOpacity style={[styles.smallButton, { backgroundColor: "#dc3545" }]} onPress={() => handleDelete(item.id)}><Text style={styles.smallButtonText}>DELETE</Text></TouchableOpacity>
               </View>
             </View>
@@ -167,8 +168,8 @@ function ViewAllScreen({ navigation, route }) {
   );
 }
 
-function SearchFilterScreen({ navigation, route }) {
-  const { items, deleteItem, updateItem } = route.params.context;
+function SearchFilterScreen({ navigation }) {
+  const { items, deleteItem } = useContext(MenuContext);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("All");
   const filtered = items.filter(it => {
@@ -186,7 +187,7 @@ function SearchFilterScreen({ navigation, route }) {
     <SafeAreaView style={styles.screen}>
       <View style={styles.container}>
         <Text style={styles.headerTitle}>Search & Filter Screen</Text>
-        <TouchableOpacity style={styles.fullAddButton} onPress={() => navigation.navigate("AddMenu", { context: route.params.context })}><Text style={styles.fullAddButtonText}>＋ ADD MENU ITEM</Text></TouchableOpacity>
+        <TouchableOpacity style={styles.fullAddButton} onPress={() => navigation.navigate("AddMenu")}><Text style={styles.fullAddButtonText}>＋ ADD MENU ITEM</Text></TouchableOpacity>
         <TextInput style={styles.searchInput} placeholder="Search menu items..." value={query} onChangeText={setQuery} />
         <Text style={styles.label}>Filter by Course</Text>
         <View style={styles.pickerBox}><Picker selectedValue={filter} onValueChange={(v) => setFilter(v)}><Picker.Item label="All Courses" value="All" /><Picker.Item label="Starter" value="Starter" /><Picker.Item label="Main Course" value="Main Course" /><Picker.Item label="Dessert" value="Dessert" /></Picker></View>
@@ -202,7 +203,7 @@ function SearchFilterScreen({ navigation, route }) {
               </View>
               <View style={styles.itemMain}><Text style={styles.listTitle}>{item.name}</Text><Text style={styles.listDesc}>{item.description || "Short description of the dish goes here..."}</Text><Text style={styles.listMeta}>Course: {item.course}</Text><Text style={styles.listMeta}>Price: R{item.price}</Text></View>
               <View style={styles.itemRight}>
-                <TouchableOpacity style={styles.smallButton} onPress={() => navigation.navigate("EditMenu", { item, updateItem, deleteItem, context: route.params.context })}><Text style={styles.smallButtonText}>EDIT</Text></TouchableOpacity>
+                <TouchableOpacity style={styles.smallButton} onPress={() => navigation.navigate("EditMenu", { item })}><Text style={styles.smallButtonText}>EDIT</Text></TouchableOpacity>
                 <TouchableOpacity style={[styles.smallButton, { marginTop: 8, backgroundColor: "#fff", borderWidth: 1, borderColor:'#000' }]} onPress={() => handleDelete(item.id)}><Text style={[styles.smallButtonText, { color: "#000" }]}>DELETE</Text></TouchableOpacity>
               </View>
             </View>
@@ -213,8 +214,8 @@ function SearchFilterScreen({ navigation, route }) {
   );
 }
 
-function StatisticsScreen({ route }) {
-  const { items } = route.params.context;
+function StatisticsScreen() {
+  const { items } = useContext(MenuContext);
   const total = items.length;
   const starters = items.filter((i) => i.course === "Starter").length;
   const mains = items.filter((i) => i.course === "Main Course").length;
@@ -245,28 +246,28 @@ function StatisticsScreen({ route }) {
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
-function MenuStack({ route }) {
-  const { context } = route.params;
+function MenuStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Home" component={HomeScreen} initialParams={{ context }} />
-      <Stack.Screen name="AddMenu" component={AddMenuScreen} initialParams={{ context }} />
-      <Stack.Screen name="ViewAll" component={ViewAllScreen} initialParams={{ context }} />
-      <Stack.Screen name="EditMenu" component={EditMenuScreen} initialParams={{ context }} />
-      <Stack.Screen name="SearchFilter" component={SearchFilterScreen} initialParams={{ context }} />
+      <Stack.Screen name="Home" component={HomeScreen} />
+      <Stack.Screen name="AddMenu" component={AddMenuScreen} />
+      <Stack.Screen name="ViewAll" component={ViewAllScreen} />
+      <Stack.Screen name="EditMenu" component={EditMenuScreen} />
+      <Stack.Screen name="SearchFilter" component={SearchFilterScreen} />
     </Stack.Navigator>
   );
 }
 export default function App() {
-  const context = usePersistentItems();
-  const boundContext = { items: context.items, addItem: context.addItem, updateItem: context.updateItem, deleteItem: context.deleteItem };
+  const contextValue = usePersistentItems();
   return (
-    <NavigationContainer>
-      <Tab.Navigator screenOptions={{ headerShown: false, tabBarStyle:{borderTopWidth:1, borderTopColor:'#000', height:60} }}>
-        <Tab.Screen name="Menu" component={MenuStack} initialParams={{ context: boundContext }} options={{ tabBarLabel: "Menu", tabBarIcon: () => <Text>☰</Text> }} />
-        <Tab.Screen name="Statistics" component={StatisticsScreen} initialParams={{ context: boundContext }} options={{ tabBarLabel: "Statistics", tabBarIcon: () => <Text>📊</Text> }} />
-      </Tab.Navigator>
-    </NavigationContainer>
+    <MenuContext.Provider value={contextValue}>
+      <NavigationContainer>
+        <Tab.Navigator screenOptions={{ headerShown: false, tabBarStyle:{borderTopWidth:1, borderTopColor:'#000', height:60} }}>
+          <Tab.Screen name="Menu" component={MenuStack} options={{ tabBarLabel: "Menu", tabBarIcon: () => <Text>☰</Text> }} />
+          <Tab.Screen name="Statistics" component={StatisticsScreen} options={{ tabBarLabel: "Statistics", tabBarIcon: () => <Text>📊</Text> }} />
+        </Tab.Navigator>
+      </NavigationContainer>
+    </MenuContext.Provider>
   );
 }
 const styles = StyleSheet.create({
