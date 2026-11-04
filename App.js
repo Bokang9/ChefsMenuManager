@@ -107,6 +107,29 @@ const DEFAULT_ITEMS = [
 const COURSE_OPTIONS = ["Starter", "Main Course", "Dessert"];
 const MenuContext = createContext(null);
 
+const COLORS = {
+  background: "#F4F7FB",
+  white: "#FFFFFF",
+  ink: "#183153",
+  muted: "#718096",
+  placeholder: "#9AA9BA",
+  border: "#E2E8F0",
+  blue: "#3977E8",
+  green: "#1FA987",
+  orange: "#F29B38",
+  purple: "#8B69D3",
+  pink: "#E56B91",
+  red: "#D9485F",
+};
+
+function showMessage(message, title = "Notice") {
+  if (Platform.OS === "web") {
+    window.alert(message);
+  } else {
+    Alert.alert(title, message);
+  }
+}
+
 function usePersistentItems() {
   const [items, setItems] = useState(DEFAULT_ITEMS);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -137,7 +160,7 @@ function usePersistentItems() {
     if (!isLoaded) return;
 
     AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(items)).catch(() => {
-      // The app remains usable if storage is unavailable.
+      // storage failure should not block the app
     });
   }, [items, isLoaded]);
 
@@ -160,14 +183,6 @@ function usePersistentItems() {
   };
 
   return { items, addItem, updateItem, deleteItem };
-}
-
-function showMessage(message, title = "Notice") {
-  if (Platform.OS === "web") {
-    window.alert(message);
-  } else {
-    Alert.alert(title, message);
-  }
 }
 
 function getCourseEmoji(course) {
@@ -287,7 +302,6 @@ function AddMenuScreen({ navigation }) {
 
   const validate = () => {
     const nextErrors = {};
-    const numericPrice = Number(price);
 
     if (!dishName.trim()) {
       nextErrors.dishName = "Dish name is required.";
@@ -299,8 +313,11 @@ function AddMenuScreen({ navigation }) {
 
     if (!price.trim()) {
       nextErrors.price = "Price is required.";
-    } else if (Number.isNaN(numericPrice) || numericPrice <= 0) {
-      nextErrors.price = "Enter a valid price greater than zero.";
+    } else {
+      const numericPrice = Number(price);
+      if (Number.isNaN(numericPrice) || numericPrice <= 0) {
+        nextErrors.price = "Enter a valid price greater than zero.";
+      }
     }
 
     setErrors(nextErrors);
@@ -441,23 +458,30 @@ function EditMenuScreen({ navigation, route }) {
   const [description, setDescription] = useState(item.description || "");
   const [course, setCourse] = useState(item.course);
   const [price, setPrice] = useState(String(item.price));
+  const [errors, setErrors] = useState({});
 
   const handleSave = () => {
+    const nextErrors = {};
     const cleanName = dishName.trim();
     const numericPrice = Number(price);
 
     if (!cleanName) {
-      showMessage("Dish name is required.", "Check the details");
-      return;
+      nextErrors.dishName = "Dish name is required.";
     }
 
     if (!course) {
-      showMessage("Please select a course.", "Check the details");
-      return;
+      nextErrors.course = "Please select a course.";
     }
 
-    if (!price.trim() || Number.isNaN(numericPrice) || numericPrice <= 0) {
-      showMessage("Enter a valid price greater than zero.", "Check the details");
+    if (!price.trim()) {
+      nextErrors.price = "Price is required.";
+    } else if (Number.isNaN(numericPrice) || numericPrice <= 0) {
+      nextErrors.price = "Enter a valid price greater than zero.";
+    }
+
+    setErrors(nextErrors);
+
+    if (Object.keys(nextErrors).length > 0) {
       return;
     }
 
@@ -469,12 +493,14 @@ function EditMenuScreen({ navigation, route }) {
       price: numericPrice.toFixed(2),
     });
 
+    showMessage(`"${cleanName}" has been updated.`, "Success");
     navigation.goBack();
   };
 
   const handleDelete = () => {
     const confirmDelete = () => {
       deleteItem(item.id);
+      showMessage(`"${item.name}" has been deleted.`, "Deleted");
       navigation.goBack();
     };
 
@@ -509,7 +535,9 @@ function EditMenuScreen({ navigation, route }) {
           >
             <Text style={styles.backButtonText}>‹</Text>
           </TouchableOpacity>
+
           <Text style={styles.formTitle}>EDIT MENU ITEM</Text>
+
           <View style={styles.backButtonPlaceholder} />
         </View>
 
@@ -519,12 +547,21 @@ function EditMenuScreen({ navigation, route }) {
 
         <Text style={styles.label}>DISH NAME</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, errors.dishName && styles.inputError]}
           value={dishName}
-          onChangeText={setDishName}
+          onChangeText={(value) => {
+            setDishName(value);
+            if (errors.dishName) {
+              setErrors((previous) => ({ ...previous, dishName: "" }));
+            }
+          }}
           placeholder="Enter dish name"
           placeholderTextColor={COLORS.placeholder}
+          accessibilityLabel="Dish name"
         />
+        {errors.dishName ? (
+          <Text style={styles.errorText}>{errors.dishName}</Text>
+        ) : null}
 
         <Text style={styles.label}>DESCRIPTION</Text>
         <TextInput
@@ -534,26 +571,48 @@ function EditMenuScreen({ navigation, route }) {
           placeholder="Describe the dish"
           placeholderTextColor={COLORS.placeholder}
           multiline
+          accessibilityLabel="Description"
         />
 
         <Text style={styles.label}>COURSE</Text>
-        <View style={styles.pickerBox}>
-          <Picker selectedValue={course} onValueChange={setCourse}>
+        <View style={[styles.pickerBox, errors.course && styles.inputError]}>
+          <Picker
+            selectedValue={course}
+            onValueChange={(value) => {
+              setCourse(value);
+              if (errors.course) {
+                setErrors((previous) => ({ ...previous, course: "" }));
+              }
+            }}
+            accessibilityLabel="Course"
+          >
             {COURSE_OPTIONS.map((option) => (
               <Picker.Item key={option} label={option} value={option} />
             ))}
           </Picker>
         </View>
+        {errors.course ? (
+          <Text style={styles.errorText}>{errors.course}</Text>
+        ) : null}
 
         <Text style={styles.label}>PRICE (R)</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, errors.price && styles.inputError]}
           value={price}
-          onChangeText={setPrice}
+          onChangeText={(value) => {
+            setPrice(value);
+            if (errors.price) {
+              setErrors((previous) => ({ ...previous, price: "" }));
+            }
+          }}
           placeholder="Enter price (e.g. 50.00)"
           placeholderTextColor={COLORS.placeholder}
           keyboardType="decimal-pad"
+          accessibilityLabel="Price"
         />
+        {errors.price ? (
+          <Text style={styles.errorText}>{errors.price}</Text>
+        ) : null}
 
         <TouchableOpacity
           style={styles.primaryButton}
@@ -950,21 +1009,6 @@ function StatisticsScreen() {
     </SafeAreaView>
   );
 }
-
-const COLORS = {
-  background: "#F4F7FB",
-  white: "#FFFFFF",
-  ink: "#183153",
-  muted: "#718096",
-  placeholder: "#9AA9BA",
-  border: "#E2E8F0",
-  blue: "#3977E8",
-  green: "#1FA987",
-  orange: "#F29B38",
-  purple: "#8B69D3",
-  pink: "#E56B91",
-  red: "#D9485F",
-};
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
