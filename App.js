@@ -72,11 +72,11 @@ function usePersistentItems() {
 
   const updateItem = (updated) =>
     setItems((prev) =>
-      prev.map((item) => (item.id === updated.id ? updated : item))
+      prev.map((it) => (it.id === updated.id ? updated : it))
     );
 
   const deleteItem = (id) =>
-    setItems((prev) => prev.filter((item) => item.id !== id));
+    setItems((prev) => prev.filter((it) => it.id !== id));
 
   return { items, addItem, updateItem, deleteItem };
 }
@@ -648,27 +648,22 @@ function StatisticsScreen() {
 
   const total = items.length;
 
+  const courseCounts = items.reduce(
+    (counts, item) => {
+      if (item.course === "Starter") counts.starters += 1;
+      if (item.course === "Main Course") counts.mains += 1;
+      if (item.course === "Dessert") counts.desserts += 1;
+      return counts;
+    },
+    { starters: 0, mains: 0, desserts: 0 }
+  );
+
   const totalPrice = items.reduce(
-    (sum, item) => sum + Number(item.price || 0),
+    (sum, item) => sum + (Number(item.price) || 0),
     0
   );
 
   const averagePrice = total > 0 ? totalPrice / total : 0;
-
-  const starters = items.filter((item) => item.course === "Starter").length;
-  const mains = items.filter((item) => item.course === "Main Course").length;
-  const desserts = items.filter((item) => item.course === "Dessert").length;
-
-  let mostCommon = "N/A";
-  if (total > 0) {
-    const courses = [
-      { name: "Starter", count: starters },
-      { name: "Main Course", count: mains },
-      { name: "Dessert", count: desserts },
-    ];
-    courses.sort((a, b) => b.count - a.count);
-    mostCommon = courses[0].name;
-  }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
@@ -712,7 +707,7 @@ function StatisticsScreen() {
             <Text style={styles.statsIcon}>☆</Text>
             <Text style={styles.statsLabel}>Starters</Text>
           </View>
-          <Text style={styles.statsNumber}>{starters}</Text>
+          <Text style={styles.statsNumber}>{courseCounts.starters}</Text>
         </View>
 
         <View style={styles.statsCard}>
@@ -720,7 +715,7 @@ function StatisticsScreen() {
             <Text style={styles.statsIcon}>🍲</Text>
             <Text style={styles.statsLabel}>Main Courses</Text>
           </View>
-          <Text style={styles.statsNumber}>{mains}</Text>
+          <Text style={styles.statsNumber}>{courseCounts.mains}</Text>
         </View>
 
         <View style={styles.statsCard}>
@@ -728,19 +723,7 @@ function StatisticsScreen() {
             <Text style={styles.statsIcon}>🎂</Text>
             <Text style={styles.statsLabel}>Desserts</Text>
           </View>
-          <Text style={styles.statsNumber}>{desserts}</Text>
-        </View>
-
-        <View style={styles.statsCard}>
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <Text style={styles.statsIcon}>📊</Text>
-            <View>
-              <Text style={styles.statsLabel}>Most Common Course</Text>
-              <Text style={{ fontSize: 13, fontWeight: "700", marginTop: 2 }}>
-                {mostCommon}
-              </Text>
-            </View>
-          </View>
+          <Text style={styles.statsNumber}>{courseCounts.desserts}</Text>
         </View>
       </View>
     </SafeAreaView>
