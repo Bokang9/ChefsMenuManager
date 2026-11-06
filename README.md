@@ -1,68 +1,153 @@
-# ChefsMenuManager
+# Chef’s Menu Manager
 
-## 1. What The App Does
-Chef's Menu Manager is a React Native mobile app built with Expo that helps a Chef manage his restaurant menu digitally. It allows the Chef to Add, View, Edit, Delete, Search, Filter by course, and see Statistics. All data is auto-saved with AsyncStorage so it remains after closing the app.
+## Part 3: Application Development and Evaluation
 
-## 2. What It Includes
-- Home Screen: Dashboard with 4 tiles and total count
-- View All Items: Shows 10 default items with Edit/Delete
-- Add Item: Form with validation + success alert
-- Edit Item: Pre-filled form using map() to update
-- Search & Filter: Live search + filter chips + count
-- Statistics: Totals per course and most common course
-- Persistence: AsyncStorage + DEFAULT_ITEMS
+**Application:** Chef’s Menu Manager  
+**Platform:** React Native with Expo  
+**Intended user:** Christoffel, restaurant owner and chef  
+**Submission date:** 6 November 2026  
 
-Default 10 Items: Bruschetta R65, Scallops R120, Arancini R85, Chicken R195, Risotto R165, Salmon R220, Ribeye R285, Tiramisu R80, Fondant R85, Crème Brûlée R75
+## 1. Application Description
 
-## 3. How To Navigate & What Each Thing Does
-Flow: Home -> All Items / Add / Search / Stats -> Edit
+Chef’s Menu Manager is a mobile application that helps Christoffel manage the restaurant’s menu digitally. It stores each dish’s name, description, course, and price. The chef can add, view, edit, delete, search, and filter menu items, and view statistics about the menu.
 
-- Home: 4 buttons navigate via navigation.navigate()
-- All Items: Card shows Name, Course badge, Price, Description. EDIT passes data via route.params. DELETE uses filter() and auto-saves.
-- Add: Validates name required and price >0. Creates id with Date.now().toString(), adds with [...menuItems, newItem], saves with AsyncStorage.setItem().
-- Edit: Pre-filled with useState(route.params.item.name). Updates with map() and saves.
-- Search & Filter: Searches name/description with toLowerCase().includes(). Filters by course.
-- Statistics: Calculates length and filter().length for totals.
+The application uses React Native and Expo. Menu data is managed through shared React context and saved locally using AsyncStorage, allowing it to be loaded again when the application is reopened.
 
-## 4. How To Run
-git clone https://github.com/Bokang9/ChefsMenuManager.git
-cd ChefsMenuManager
-npm install
-npx expo start -c
-Press w for web or scan QR with Expo Go
+## 2. Objectives
 
-## POE Video Demonstration
+The objectives of the application are to:
 
-YouTube Link (Unlisted): https://youtu.be/VhvNOVp7ae4
+1. Provide the chef with one place to manage menu items using a mobile device.
+2. Allow the chef to add, view, edit, and delete dishes.
+3. Help the chef find items using name search and course filters.
+4. Reduce input mistakes through validation and clear error messages.
+5. Provide an overview of menu items and prices through automatically updated statistics.
+6. Offer a consistent, clear, and user-friendly interface.
 
-This video demonstrates the Chef Menu App running with:
-npx expo start -c on http://localhost:8081
-Includes: Add item fix, view all 10 menu items, search/filter.
+## 3. User Requirements and How the Application Meets Them
 
-## 5. Conclusion
-In conclusion, the Chef's Menu Manager app successfully meets all POE requirements. It provides complete CRUD functionality with value-added features. The DEFAULT_ITEMS solution ensures data is visible on first launch for marking. The app demonstrates core mobile skills: React Native, hooks, navigation, AsyncStorage, validation. All 8 GitHub Actions workflows are passing green. Through this POE I learned to build practical user-friendly apps solving real hospitality problems.
+| User requirement | How the application meets it |
+|---|---|
+| Store menu information | Each item includes a dish name, description, course, and price. |
+| Add dishes | The Add Menu Item screen lets the chef enter the required information and save a dish. |
+| View the menu | The View All Items screen displays the saved items and their details. |
+| Update menu information | The Edit Menu Item screen allows the chef to update an existing dish. |
+| Remove dishes | The chef can delete items, with a confirmation prompt to help avoid accidental deletion. |
+| Find menu items | The Search & Filter screen supports searching by dish name. |
+| Browse by course | The chef can filter items by Starter, Main Course, or Dessert. Search and filtering can be cleared to show all items again. |
+| Review menu data | The Statistics screen displays total items, average price, counts by course, and the most common course. |
+| Avoid incomplete or invalid data | Forms validate the dish name, course, and price, and show messages when information is missing or invalid. |
+| Keep menu data between sessions | AsyncStorage saves menu data locally on the device. |
 
-## 6. Change Log - What Was Changed Since Part 2
+## 4. Navigation and Application Flow
 
-This section documents all changes implemented since Part 2 submission as required.
+The application has two bottom-tab sections: **Menu** and **Statistics**. The Menu tab contains the main menu-management screens.
 
-### Part 2 Issues That Were Fixed:
-1. **Empty Screen on First Launch (Critical Fix):** In Part 2 the app showed "No menu items" when lecturer opened it. FIXED by adding DEFAULT_ITEMS array with 10 realistic dishes. App now checks AsyncStorage first, if empty it loads DEFAULT_ITEMS.
-2. **TransformError / Build Failure:** Part 2 had TransformError due to Picker import and non-serializable values warning. FIXED by correcting import from @react-native-picker/picker and ensuring App.js structure is clean. GitHub Actions now shows 8/8 green ticks.
-3. **No Auto-Save:** Part 2 did not persist after closing. FIXED by implementing AsyncStorage.setItem on every add/edit/delete and getItem on app start with useEffect.
-4. **Missing Validation:** Added proper validation - Name required Alert and Price must be >0 Alert. Part 2 allowed empty items.
-5. **Missing Confirmation Alerts:** Added Success Alert "Menu item added" and Delete Confirmation "Are you sure?" as per POE spec.
-6. **Added Search Count:** Added "Showing X of Y items" text in Search Screen which was missing in Part 2.
-7. **Added Course Color Badges:** Added color-coded badges - Orange for Starter, Green for Main, Purple for Dessert for better UI.
-8. **Added South African Pricing:** Changed all prices to Rands (R65-R285) to be locally relevant.
-9. **README Overhaul:** Part 2 README was basic. Now includes full documentation, navigation guide, run instructions, conclusion, and this changelog.
+| Screen | Navigation | Purpose |
+|---|---|---|
+| **Home / Menu** | Opens from the Menu tab | Provides shortcuts to add an item, view all items, search, or filter by course. |
+| **Add Menu Item** | Select **Add New Item** from Home or **Add Menu Item** from Search & Filter | Allows the chef to enter a dish name, description, course, and price. |
+| **View All Items** | Select **View All Items** from Home | Shows menu items and their Edit and Delete actions. |
+| **Search & Filter** | Select **Search Items** or **Filter by Course** from Home | Lets the chef search by name, filter by course, or use both together. |
+| **Edit Menu Item** | Select **Edit** on a menu item | Allows the chef to update or delete an existing item, or cancel and return. |
+| **Statistics** | Select the Statistics tab | Displays the current menu totals, average price, course counts, and most common course. |
 
-### Refactoring - What Was Changed During Refactoring:
-1. **Code Structure Refactored:** Moved all screens into single App.js with clean Stack.Navigator to avoid navigation prop issues that caused "navigation.navigate is not a function" error in Part 2.
-2. **State Logic Refactored:** Consolidated menuItems state at top level in App.js and passed setter functions as props instead of passing non-serializable functions through route.params which caused yellow warning "Non-serializable values were found in navigation state".
-3. **Storage Logic Refactored:** Created two separate useEffects - one for loading (empty dependency []) and one for saving (dependency [menuItems]) with check to prevent overwriting DEFAULT_ITEMS on first load.
-4. **UI Refactored:** Replaced basic Views with styled Cards using StyleSheet, added shadows, borderRadius, and improved FlatList rendering with keyExtractor using item.id.
-5. **Picker Refactored:** Changed Picker implementation from old community import to correct @react-native-picker/picker usage with proper style.
-6. **Performance Refactored:** Used useState for filtered results in Search screen instead of filtering inside render to improve performance.
-7. **Error Handling Refactored:** Added try/catch around all AsyncStorage operations to prevent app crash if storage fails.
+### Typical user flow
 
+1. The chef opens the Home / Menu screen.
+2. The chef selects an action: add an item, view the menu, search, or filter.
+3. When adding or editing a dish, the chef enters or updates its details.
+4. The application validates the information.
+5. If information is missing or invalid, an error message appears so the chef can correct it.
+6. Valid information is saved, and the updated menu is shown.
+7. Statistics recalculate using the current menu data.
+
+## 5. Main Features
+
+### 5.1 Menu management
+
+The chef can add new dishes, view the menu, edit item details, and delete items. Each menu item contains:
+
+- Dish name
+- Description
+- Course
+- Price
+
+### 5.2 Search and filtering
+
+The Search & Filter screen allows the chef to search by dish name and filter by Starter, Main Course, or Dessert. The chef can combine a search and course filter. A Clear action resets the search and filter to show the full menu again.
+
+### 5.3 Statistics
+
+The Statistics screen displays:
+
+- Total number of menu items
+- Average price of all menu items
+- Number of Starter items
+- Number of Main Course items
+- Number of Dessert items
+- Most common course
+
+The statistics are calculated from the shared menu data and update when an item is added, edited, or deleted.
+
+### 5.4 Data persistence
+
+AsyncStorage saves the menu data locally on the device. When the application is reopened, it attempts to load the saved items.
+
+## 6. User Interface and Colour Palette
+
+The interface uses a consistent style with a light background, readable text, coloured accents, and rounded cards.
+
+| Colour | Hex value | Use |
+|---|---|---|
+| Soft background | `#F4F7FB` | Screen backgrounds |
+| White | `#FFFFFF` | Cards, forms, and tab bar |
+| Navy | `#183153` | Headings and primary text |
+| Blue | `#3977E8` | Primary actions and highlights |
+| Green | `#1FA987` | Positive accents and average-price statistic |
+| Orange | `#F29B38` | Starter course accent |
+| Purple | `#8B69D3` | Main Course accent |
+| Pink | `#E56B91` | Dessert accent |
+| Red | `#D9485F` | Delete actions and validation errors |
+| Muted grey | `#718096` | Descriptions and secondary text |
+
+The light background and white cards help keep the screens readable. Navy provides contrast for important text, while blue identifies primary actions. Different accent colours help distinguish course categories and statistics. Red is used for destructive actions and errors so they are easy to recognise.
+
+## 7. Validation and User Feedback
+
+The application validates menu information before saving:
+
+- Dish name is required.
+- A course must be selected.
+- Price is required and must be a positive number.
+
+When information is invalid, an error message tells the user what to correct. The application also provides success feedback after adding or updating an item and asks for confirmation before deleting one. Empty-state messages help explain when there are no menu items or no search results.
+
+## 8. Reusable Components and Code Organisation
+
+Reusable components help keep the interface consistent and reduce repeated code:
+
+- `DishIcon` displays a course-themed icon beside a dish.
+- `MenuItemCard` displays dish details and Edit/Delete actions.
+- `StatCard` displays a statistic with its label and value.
+- `showMessage` provides platform-appropriate feedback messages.
+
+Shared menu state allows the list and statistics screens to use the same current data.
+
+## Conclusion
+
+Chef’s Menu Manager provides Christoffel with a practical way to manage restaurant menu information from a mobile device. It supports adding, viewing, editing, deleting, searching, and filtering menu items, while its Statistics screen gives the chef an overview of the menu. Validation, confirmation prompts, and feedback messages help make the application easier to use and reduce mistakes. The consistent visual design and reusable components support a clear, user-friendly experience.
+
+The application meets the needs of the user by giving the chef a simple digital way to organise menu items without relying on manual paper records. It is also suitable for a mobile environment because it is intuitive, responsive, and designed to help the chef work efficiently.
+
+In conclusion, the application meets the project requirements by combining menu management, user validation, search and filtering, statistics, persistence, and a polished interface in one functional mobile solution.
+
+## References
+
+- Expo. (n.d.). *Expo Documentation*. [ONLINE] Available at: https://docs.expo.dev/ [Accessed 6 November 2026].
+- React Native. (n.d.). *React Native Documentation*. [ONLINE] Available at: https://reactnative.dev/docs/getting-started [Accessed 6 November 2026].
+- React Navigation. (n.d.). *React Navigation Documentation*. [ONLINE] Available at: https://reactnavigation.org/docs/getting-started [Accessed 6 November 2026].
+- AsyncStorage. (n.d.). *AsyncStorage Documentation*. [ONLINE] Available at: https://react-native-async-storage.github.io/async-storage/ [Accessed 6 November 2026].
+- GitHub. (2026). *ChefsMenuManager repository*. [ONLINE] Available at: https://github.com/Bokang9/ChefsMenuManager [Accessed 6 November 2026].
+- YouTube. (2026). *Chef’s Menu Manager demonstration video*. [ONLINE] Available at: https://youtu.be/VhvNOVp7ae4 [Accessed 6 November 2026].
+- diagrams.net. (2026). *Chef’s Menu Manager application flow*. [ONLINE] Available at: https://drive.google.com/file/d/1eBMyDxSUZkuMpgHg6JvvHYWqmA7zBM1r/view?usp=sharing [Accessed 6 November 2026].
